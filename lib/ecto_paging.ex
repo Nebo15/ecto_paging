@@ -19,7 +19,9 @@ defmodule Ecto.Paging do
 
   ## Limitations:
     * Right now it works only with schemas that have integer primary keys.
-    TODO: Investigate [SQL Cursors](https://www.postgresql.org/docs/9.2/static/plpgsql-cursors.html).
+    (TODO: Investigate [SQL Cursors](https://www.postgresql.org/docs/9.2/static/plpgsql-cursors.html)).
+    * It doesn't support of different order-by's, result can be ordered by PK only (TODO FIXME).
+    * It doesn't construct `paginate` struct with `has_more` and `size` counts (TODO: add this helpers).
   """
   import Ecto.Query
 
