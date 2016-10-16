@@ -3,6 +3,11 @@ defmodule Ecto.PagingTest do
   alias Ecto.Paging
   doctest Ecto.Paging
 
+  setup do
+    insert_records()
+    :ok
+  end
+
   test "converts from map" do
     assert %Ecto.Paging{limit: 50} = Paging.from_map(%{limit: 50})
     assert %Ecto.Paging{has_more: true} = Paging.from_map(%{has_more: true})
@@ -24,26 +29,73 @@ defmodule Ecto.PagingTest do
             = Paging.to_map(%Ecto.Paging{cursors: %Ecto.Paging.Cursors{ending_before: 50}})
   end
 
-  test "pagination" do
-    insert_records()
-    query = from p in Ecto.Paging.Schema
-
-    query = query
+  test "limits results" do
+    res1 = get_query()
     |> Paging.paginate(%Ecto.Paging{limit: 50})
+    |> Ecto.Paging.Repo.all
 
-    prev = Ecto.Paging.Repo.all(query)
-    |> Enum.map(fn record -> record.id end)
-    |> IO.inspect
+    assert length(res1) == 50
 
-    query = query
-    |> Paging.paginate(%Ecto.Paging{limit: 50, cursors: %Ecto.Paging.Cursors{starting_after: List.last(prev)}})
+    res2 = get_query()
+    |> Paging.paginate(%Ecto.Paging{limit: 101})
+    |> Ecto.Paging.Repo.all
 
-    Ecto.Paging.Repo.all(query)
-    |> Enum.map(fn record -> record.id end)
-    |> IO.inspect
+    assert length(res2) == 101
+
+    assert 0 == 0..49
+    |> Enum.filter(fn index ->
+      Enum.at(res1, index).id != Enum.at(res2, index).id
+    end)
+    |> length
   end
 
-  def insert_records do
+  test "starting after" do
+    res1 = get_query()
+    |> Paging.paginate(%Ecto.Paging{limit: 100})
+    |> Ecto.Paging.Repo.all
+
+    assert length(res1) == 100
+
+    res2 = get_query()
+    |> Paging.paginate(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
+    |> Ecto.Paging.Repo.all
+
+    assert length(res2) == 50
+
+    # Second query should be subset of first one
+    assert 0 == 0..49
+    |> Enum.filter(fn index ->
+      Enum.at(res1, index + 50).id != Enum.at(res2, index).id
+    end)
+    |> length
+  end
+
+  # test "ending before" do
+  #   res1 = get_query()
+  #   |> Paging.paginate(%Ecto.Paging{limit: 100})
+  #   |> Ecto.Paging.Repo.all
+
+  #   assert length(res1) == 100
+
+  #   res2 = get_query()
+  #   |> Paging.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+  #   |> Ecto.Paging.Repo.all
+
+  #   assert length(res2) == 50
+
+  #   # Second query should be subset of first one
+  #   assert 0 == 0..49
+  #   |> Enum.filter(fn index ->
+  #     Enum.at(res1, index + 50).id != Enum.at(res2, index).id
+  #   end)
+  #   |> length
+  # end
+
+  defp get_query do
+    from p in Ecto.Paging.Schema
+  end
+
+  defp insert_records do
     for _ <- 1..150, do: Ecto.Paging.Repo.insert(%Ecto.Paging.Schema{name: "abc"})
   end
 end

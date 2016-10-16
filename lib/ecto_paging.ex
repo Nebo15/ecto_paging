@@ -22,6 +22,7 @@ defmodule Ecto.Paging do
     (TODO: Investigate [SQL Cursors](https://www.postgresql.org/docs/9.2/static/plpgsql-cursors.html)).
     * It doesn't support of different order-by's, result can be ordered by PK only (TODO FIXME).
     * It doesn't construct `paginate` struct with `has_more` and `size` counts (TODO: add this helpers).
+    * Ending before doesn't work without starting after and ignores limits
   """
   import Ecto.Query
 
@@ -81,25 +82,41 @@ defmodule Ecto.Paging do
 
   defp filter_by_cursors(query, %{starting_after: starting_after, ending_before: ending_before})
        when is_integer(starting_after) and is_integer(ending_before) do
+    pk = get_primary_key(query)
+
     query
-    |> filter_by_cursors(%{ending_before: ending_before})
-    |> filter_by_cursors(%{starting_after: starting_after})
+    |> where([c], field(c, ^pk) > ^starting_after)
+    |> where([c], field(c, ^pk) < ^ending_before)
   end
 
-  defp filter_by_cursors(query, %{ending_before: ending_before})
+  defp filter_by_cursors(query, %{starting_after: nil, ending_before: ending_before})
        when is_integer(ending_before) do
     pk = get_primary_key(query)
 
     query
     |> where([c], field(c, ^pk) < ^ending_before)
+    |> reverse_orders(pk)
   end
 
-  defp filter_by_cursors(query, %{starting_after: starting_after})
+  defp filter_by_cursors(query, %{starting_after: starting_after, ending_before: nil})
        when is_integer(starting_after) do
     pk = get_primary_key(query)
 
     query
     |> where([c], field(c, ^pk) > ^starting_after)
+  end
+
+  defp reverse_orders(%Ecto.Query{order_bys: order_bys} = query, pk)
+       when is_list(order_bys) and length(order_bys) > 0 do
+    IO.inspect "=== order ==="
+    IO.inspect order_bys
+    IO.inspect pk
+    query
+  end
+
+  defp reverse_orders(%Ecto.Query{} = query, pk) do
+    query
+    |> order_by([c], asc: field(c, ^pk))
   end
 
   defp filter_by_cursors(query, _), do: query
