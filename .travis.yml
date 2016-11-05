@@ -5,7 +5,7 @@ cache:
 services:
   - postgresql
 addons:
-  postgresql: "9.5"
+  postgresql: "9.4"
 elixir:
   - 1.3.4
 otp_release:
