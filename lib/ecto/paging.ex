@@ -41,7 +41,8 @@ defmodule Ecto.Paging do
   def from_map(%{cursors: cursors} = paging) when is_map(cursors) do
     cursors = struct(Ecto.Paging.Cursors, cursors)
 
-    struct(Ecto.Paging, paging)
+    Ecto.Paging
+    |> struct(paging)
     |> Map.put(:cursors, cursors)
   end
 
