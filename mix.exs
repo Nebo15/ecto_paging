@@ -1,7 +1,7 @@
 defmodule Ecto.Paging.Mixfile do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
 
   def project do
     [app: :ecto_paging,
@@ -46,7 +46,7 @@ defmodule Ecto.Paging.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:confex, "~> 1.4"},
-     {:ecto, "2.1.0-rc.2"},
+     {:ecto, "2.1.0-rc.3"},
      {:postgrex, "~> 0.12.1"},
      {:benchfella, "~> 0.3", only: [:dev, :test]},
      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},

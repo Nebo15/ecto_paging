@@ -1,16 +1,38 @@
 # Ecto.Paging
 
-**TODO: Add description**
+This module provides a easy way to apply cursor-based pagination to your Ecto Queries.
+
+## Usage:
+
+  1. Add macro to your repo
+
+      defmodule MyRepo do
+        use Ecto.Repo, otp_app: :my_app
+        use Ecto.Pagging.Repo # This string adds `paginate/2` method.
+      end
+
+  2. Paginate!
+
+      query = from p in Ecto.Paging.Schema
+
+      query
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
+      |> Ecto.Paging.TestRepo.all
+
+## Limitations:
+
+  * Right now it works only with schemas that have `:inserted_at` field with auto-generated value.
+  * You need to be careful with order-by's in your queries, since this feature is not tested yet.
+  * It doesn't construct `paginate` struct with `has_more` and `size` counts (TODO: add this helpers).
+  * When both `starting_after` and `ending_before` is set, only `starting_after` is used.
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
   1. Add `ecto_paging` to your list of dependencies in `mix.exs`:
 
     ```elixir
     def deps do
-      [{:ecto_paging, "~> 0.1.0"}]
+      [{:ecto_paging, "~> 0.2.0"}]
     end
     ```
 
@@ -21,7 +43,3 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
       [applications: [:ecto_paging]]
     end
     ```
-
-If [published on HexDocs](https://hex.pm/docs/tasks#hex_docs), the docs can
-be found at [https://hexdocs.pm/ecto_paging](https://hexdocs.pm/ecto_paging)
-

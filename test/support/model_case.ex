@@ -14,7 +14,7 @@ defmodule Ecto.Paging.ModelCase do
 
   using do
     quote do
-      alias Ecto.Paging.Repo
+      alias Ecto.Paging.TestRepo
 
       import Ecto
       import Ecto.Changeset
@@ -24,10 +24,10 @@ defmodule Ecto.Paging.ModelCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Ecto.Paging.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Ecto.Paging.TestRepo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Ecto.Paging.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(Ecto.Paging.TestRepo, {:shared, self()})
     end
 
     :ok

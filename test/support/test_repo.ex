@@ -1,4 +1,4 @@
-defmodule Ecto.Paging.Repo do
+defmodule Ecto.Paging.TestRepo do
   @moduledoc """
   Repo for Ecto database.
 
@@ -6,4 +6,5 @@ defmodule Ecto.Paging.Repo do
   """
 
   use Ecto.Repo, otp_app: :ecto_paging
+  use Ecto.Pagging.Repo
 end
