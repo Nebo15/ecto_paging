@@ -8,18 +8,22 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 
   1. Add macro to your repo
 
-      defmodule MyRepo do
-        use Ecto.Repo, otp_app: :my_app
-        use Ecto.Pagging.Repo # This string adds `paginate/2` method.
-      end
+    ```elixir
+    defmodule MyRepo do
+      use Ecto.Repo, otp_app: :my_app
+      use Ecto.Pagging.Repo # This string adds `paginate/2` method.
+    end
+    ```
 
   2. Paginate!
 
-      query = from p in Ecto.Paging.Schema
+    ```elixir
+    query = from p in Ecto.Paging.Schema
 
-      query
-      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
-      |> Ecto.Paging.TestRepo.all
+    query
+    |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
+    |> Ecto.Paging.TestRepo.all
+    ```
 
 ## Limitations:
 
