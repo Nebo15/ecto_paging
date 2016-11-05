@@ -1,5 +1,7 @@
 # Ecto.Paging
 
+[![Deps Status](https://beta.hexfaktor.org/badge/all/github/Nebo15/ecto_paging.svg)](https://beta.hexfaktor.org/github/Nebo15/ecto_paging) [![Build Status](https://travis-ci.org/Nebo15/ecto_paging.svg?branch=master)](https://travis-ci.org/Nebo15/ecto_paging) [![Coverage Status](https://coveralls.io/repos/github/Nebo15/ecto_paging/badge.svg?branch=master)](https://coveralls.io/github/Nebo15/ecto_paging?branch=master)
+
 This module provides a easy way to apply cursor-based pagination to your Ecto Queries.
 
 ## Usage:
