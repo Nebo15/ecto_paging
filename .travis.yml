@@ -1,5 +1,4 @@
 language: elixir
-
 cache:
   directories:
   - deps
@@ -14,10 +13,6 @@ otp_release:
 env:
   global:
     - MIX_ENV=test
-    - DOCKER_HUB_ACCOUNT=place_your_account_name_here
-    - MAIN_BRANCHES="master develop staging" # Branches on which you want version to be incremented
-    # Docker credentials
-    - secure: "..."
 before_install:
   # Expose MQ and DB to Docker container
   - sudo ./bin/ci/init-db.sh
@@ -27,10 +22,8 @@ script:
   # Run all tests except pending ones
   - "mix test --exclude pending --trace"
   # Submit code coverage report to Coveralls
-  # Add --pro if you using private repo.
   - "mix coveralls.travis"
   # Run static code analysis
   - "mix credo"
   # Check code style
   - "mix dogma"
-# after_success:
