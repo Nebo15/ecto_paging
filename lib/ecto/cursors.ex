@@ -8,4 +8,6 @@ defmodule Ecto.Paging.Cursors do
   """
   defstruct starting_after: nil,
             ending_before: nil
+
+  @type t :: %{starting_after: any, ending_before: any}
 end

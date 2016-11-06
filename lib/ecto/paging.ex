@@ -26,7 +26,7 @@ defmodule Ecto.Paging do
   """
   import Ecto.Query
 
-  @type t :: %{limit: number, cursors: %Ecto.Paging.Cursors{}, has_more: number, size: number}
+  @type t :: %{limit: number, cursors: Ecto.Paging.Cursors.t, has_more: number, size: number}
 
   @doc """
   This struct defines pagination rules.
