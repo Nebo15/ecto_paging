@@ -40,6 +40,11 @@ defmodule Ecto.PagingTest do
     |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 101})
     |> Ecto.Paging.TestRepo.all
 
+    {res3, _paging} = get_query()
+    |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 101})
+
+    assert res2 == res3
+
     assert length(res2) == 101
 
     assert 0 == 0..49
@@ -47,6 +52,13 @@ defmodule Ecto.PagingTest do
       Enum.at(res1, index).id != Enum.at(res2, index).id
     end)
     |> length
+  end
+
+  test "works with schema" do
+    {res, _paging} = Ecto.Paging.Schema
+    |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 101})
+
+    assert length(res) == 101
   end
 
   test "starting after" do
@@ -60,6 +72,11 @@ defmodule Ecto.PagingTest do
     |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
     |> Ecto.Paging.TestRepo.all
 
+    {res3, paging} = get_query()
+    |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
+
+    assert res2 == res3
+
     assert length(res2) == 50
 
     # Second query should be subset of first one
@@ -68,6 +85,9 @@ defmodule Ecto.PagingTest do
       Enum.at(res1, index + 50).id != Enum.at(res2, index).id
     end)
     |> length
+
+    assert List.last(res2).id == paging.cursors.starting_after
+    assert true == paging.has_more
   end
 
   test "ending before" do
@@ -81,6 +101,11 @@ defmodule Ecto.PagingTest do
     |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
     |> Ecto.Paging.TestRepo.all
 
+    {res3, paging} = get_query()
+    |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+    assert res2 == res3
+
     assert length(res2) == 50
 
     # Second query should be subset of first one
@@ -89,6 +114,9 @@ defmodule Ecto.PagingTest do
       Enum.at(res1, index + 99).id != Enum.at(res2, index).id
     end)
     |> length
+
+    assert List.first(res2).id == paging.cursors.ending_before
+    assert true == paging.has_more
   end
 
   defp get_query do

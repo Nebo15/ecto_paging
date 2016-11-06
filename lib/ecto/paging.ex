@@ -26,6 +26,8 @@ defmodule Ecto.Paging do
   """
   import Ecto.Query
 
+  @type t :: %{limit: number, cursors: %Ecto.Paging.Cursors{}, has_more: number, size: number}
+
   @doc """
   This struct defines pagination rules.
   It can be used in your response API.
@@ -83,6 +85,37 @@ defmodule Ecto.Paging do
 
   def paginate(%Ecto.Query{} = query, paging, opts) when is_map(paging) do
     paginate(query, Ecto.Paging.from_map(paging), opts)
+  end
+
+  def paginate(queriable, paging, opts) when is_atom(queriable) do
+    queriable
+    |> Ecto.Queryable.to_query()
+    |> paginate(paging, opts)
+  end
+
+  def get_next_paging(query_result, %Ecto.Paging{limit: nil} = paging) do
+    get_next_paging(query_result, %{paging | limit: length(query_result)})
+  end
+
+  def get_next_paging(query_result, %Ecto.Paging{limit: limit, cursors: cursors}) when is_list(query_result) do
+    %Ecto.Paging{
+      limit: limit,
+      has_more: length(query_result) >= limit,
+      cursors: get_next_cursors(query_result, cursors)
+    }
+  end
+
+  def get_next_paging(query_result, paging) when is_map(paging) do
+    get_next_paging(query_result, Ecto.Paging.from_map(paging))
+  end
+
+  defp get_next_cursors(query_result, %Ecto.Paging.Cursors{ending_before: ending_before})
+      when not is_nil(ending_before) do
+      %Ecto.Paging.Cursors{ending_before: List.first(query_result).id} # TODO: hardcoded `id` pk field
+  end
+
+  defp get_next_cursors(query_result, _) do
+      %Ecto.Paging.Cursors{starting_after: List.last(query_result).id}
   end
 
   defp filter_by_cursors(%Ecto.Query{from: {table, _schema}} = query, %{starting_after: starting_after}, pk,

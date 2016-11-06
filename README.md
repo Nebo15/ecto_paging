@@ -11,7 +11,7 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
     ```elixir
     defmodule MyRepo do
       use Ecto.Repo, otp_app: :my_app
-      use Ecto.Pagging.Repo # This string adds `paginate/2` method.
+      use Ecto.Pagging.Repo # This string adds `paginate/2` and `page/3` methods.
     end
     ```
 
@@ -20,16 +20,15 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
     ```elixir
     query = from p in Ecto.Paging.Schema
 
-    query
-    |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
-    |> Ecto.Paging.TestRepo.all
+    {res, next_paging} = query
+    |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 150})
     ```
 
 ## Limitations:
 
   * Right now it works only with schemas that have `:inserted_at` field with auto-generated value.
   * You need to be careful with order-by's in your queries, since this feature is not tested yet.
-  * It doesn't construct `paginate` struct with `has_more` and `size` counts (TODO: add this helpers).
+  * It doesn't construct `has_more` and `size` counts in `paginate` struct (TODO: add this helpers).
   * When both `starting_after` and `ending_before` is set, only `starting_after` is used.
 
 ## Installation
@@ -38,7 +37,7 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 
     ```elixir
     def deps do
-      [{:ecto_paging, "~> 0.2.0"}]
+      [{:ecto_paging, "~> 0.3.0"}]
     end
     ```
 
