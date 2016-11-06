@@ -50,14 +50,13 @@ defmodule Ecto.Paging do
 
   def from_map(%{cursors: cursors} = paging) when is_map(cursors) do
     cursors = struct(Ecto.Paging.Cursors, cursors)
-
-    Ecto.Paging
-    |> struct(paging)
-    |> Map.put(:cursors, cursors)
+    from_map(%{paging | cursors: cursors})
   end
 
   def from_map(paging) when is_map(paging) do
-    struct(Ecto.Paging, paging)
+    Ecto.Paging
+    |> struct(paging)
+    |> from_map()
   end
 
   @doc """
