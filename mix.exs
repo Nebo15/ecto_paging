@@ -24,7 +24,7 @@ defmodule Ecto.Paging.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :confex, :ecto, :postgrex]]
+    [applications: [:logger, :ecto]]
   end
 
   # Specifies which paths to compile per environment.
