@@ -87,7 +87,7 @@ defmodule Ecto.PagingTest do
     |> length
 
     assert List.last(res2).id == paging.cursors.starting_after
-    assert true == paging.has_more
+    assert paging.has_more
   end
 
   test "ending before" do
@@ -116,7 +116,7 @@ defmodule Ecto.PagingTest do
     |> length
 
     assert List.first(res2).id == paging.cursors.ending_before
-    assert true == paging.has_more
+    assert paging.has_more
   end
 
   defp get_query do
