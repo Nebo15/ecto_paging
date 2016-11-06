@@ -40,6 +40,14 @@ defmodule Ecto.Paging do
   @doc """
   Convert map into `Ecto.Paging` struct.
   """
+  def from_map(%Ecto.Paging{cursors: %Ecto.Paging.Cursors{}} = paging), do: paging
+
+  def from_map(%{cursors: %Ecto.Paging.Cursors{} = cursors} = paging) do
+    Ecto.Paging
+    |> struct(paging)
+    |> Map.put(:cursors, cursors)
+  end
+
   def from_map(%{cursors: cursors} = paging) when is_map(cursors) do
     cursors = struct(Ecto.Paging.Cursors, cursors)
 
@@ -81,6 +89,10 @@ defmodule Ecto.Paging do
     query
     |> limit(^limit)
     |> filter_by_cursors(cursors, pk, opts)
+  end
+
+  def paginate(%Ecto.Query{} = query, %Ecto.Paging{}, _opts) do
+    query
   end
 
   def paginate(%Ecto.Query{} = query, paging, opts) when is_map(paging) do
