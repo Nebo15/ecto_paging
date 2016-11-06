@@ -1,7 +1,5 @@
 defmodule Ecto.Paging.Cursors do
-  @moduledoc """
-  This module defines nested struct with cursors for `Ecto.Paging`.
-  """
+  @moduledoc false
 
   @doc """
   This is struct for `Ecto.Paging` that holds cursors.

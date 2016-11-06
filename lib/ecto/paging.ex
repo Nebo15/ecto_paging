@@ -93,6 +93,10 @@ defmodule Ecto.Paging do
     |> paginate(paging, opts)
   end
 
+  @doc """
+  Build a `%Ecto.Paging{}` struct to fetch next page results based on previous `Ecto.Repo.all` result
+  and previous paging struct.
+  """
   def get_next_paging(query_result, %Ecto.Paging{limit: nil} = paging) do
     get_next_paging(query_result, %{paging | limit: length(query_result)})
   end

@@ -1,6 +1,6 @@
 defmodule Ecto.Pagging.Repo do
   @moduledoc """
-  This module provides macro that injects `paginate/2` method into Ecto.Repo's.
+  This module provides macro that injects `paginate/2` and `page/3` methods into Ecto.Repo's.
   """
   defmacro __using__(_) do
     quote location: :keep do
