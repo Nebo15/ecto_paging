@@ -32,7 +32,7 @@ defmodule Ecto.Paging do
   This struct defines pagination rules.
   It can be used in your response API.
   """
-  defstruct limit: nil,
+  defstruct limit: 50,
             cursors: %Ecto.Paging.Cursors{},
             has_more: nil,
             size: nil

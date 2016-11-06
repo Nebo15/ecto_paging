@@ -61,6 +61,13 @@ defmodule Ecto.PagingTest do
     assert length(res) == 101
   end
 
+  test "has default limit" do
+    {res, _paging} = Ecto.Paging.Schema
+    |> Ecto.Paging.TestRepo.page(%{})
+
+    assert length(res) == 50
+  end
+
   test "starting after" do
     res1 = get_query()
     |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
