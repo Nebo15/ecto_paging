@@ -133,33 +133,35 @@ defmodule Ecto.Paging do
       %Ecto.Paging.Cursors{starting_after: List.last(query_result).id}
   end
 
-  defp filter_by_cursors(%Ecto.Query{from: {table, _schema}} = query, %{starting_after: starting_after}, pk,
+  defp filter_by_cursors(%Ecto.Query{from: {table, schema}} = query, %{starting_after: starting_after}, pk,
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(starting_after) do
-    ts = extract_timestamp(repo, table, pk, starting_after, chronological_field)
+    pk_type = schema.__schema__(:type, pk)
+    ts = extract_timestamp(repo, table, pk_type, pk, starting_after, chronological_field)
 
     query
     |> where([c], field(c, ^chronological_field) > ^ts)
   end
 
-  defp filter_by_cursors(%Ecto.Query{from: {table, _schema}} = query, %{ending_before: ending_before}, pk,
+  defp filter_by_cursors(%Ecto.Query{from: {table, schema}} = query, %{ending_before: ending_before}, pk,
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(ending_before) do
-    ts = extract_timestamp(repo, table, pk, ending_before, chronological_field)
+    pk_type = schema.__schema__(:type, pk)
+    ts = extract_timestamp(repo, table, pk_type, pk, ending_before, chronological_field)
 
     {rev_order, q} = query
     |> where([c], field(c, ^chronological_field) < ^ts)
     |> flip_orders(pk)
 
-    from e in subquery(q), order_by: [{^rev_order, ^pk}]
+    restore_query_order(rev_order, pk_type, pk, q, chronological_field)
   end
 
   defp filter_by_cursors(query, %{ending_before: nil, starting_after: nil}, _pk, _opts), do: query
 
-  defp extract_timestamp(repo, table, pk, pk_value, chronological_field) do
+  defp extract_timestamp(repo, table, pk_type, pk, pk_value, chronological_field) do
     start_timestamp_native =
       repo.one from r in table,
-        where: field(r, ^pk) == ^pk_value,
+        where: field(r, ^pk) == type(^pk_value, ^pk_type),
         select: field(r, ^chronological_field)
 
     {:ok, start_timestamp} = Ecto.DateTime.load(start_timestamp_native)
@@ -174,6 +176,14 @@ defmodule Ecto.Paging do
 
   defp flip_orders(%Ecto.Query{} = query, pk) do
     {:asc, query |> order_by([c], desc: field(c, ^pk))}
+  end
+
+  defp restore_query_order(order, :binary_id, _pk, query, chronological_field) do
+    from e in subquery(query), order_by: [{^order, ^chronological_field}]
+  end
+
+  defp restore_query_order(order, pk_type, pk, query, _chronological_field) do
+    from e in subquery(query), order_by: [{^order, ^pk}]
   end
 
   defp get_primary_key(%Ecto.Query{from: {_, model}}) do
