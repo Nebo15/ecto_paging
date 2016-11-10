@@ -137,7 +137,7 @@ defmodule Ecto.Paging do
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(starting_after) do
     pk_type = schema.__schema__(:type, pk)
-    ts = extract_timestamp(repo, table, pk_type, pk, starting_after, chronological_field)
+    ts = extract_timestamp(repo, table, {pk_type, pk}, starting_after, chronological_field)
 
     query
     |> where([c], field(c, ^chronological_field) > ^ts)
@@ -147,7 +147,7 @@ defmodule Ecto.Paging do
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(ending_before) do
     pk_type = schema.__schema__(:type, pk)
-    ts = extract_timestamp(repo, table, pk_type, pk, ending_before, chronological_field)
+    ts = extract_timestamp(repo, table, {pk_type, pk}, ending_before, chronological_field)
 
     {rev_order, q} = query
     |> where([c], field(c, ^chronological_field) < ^ts)
@@ -158,7 +158,7 @@ defmodule Ecto.Paging do
 
   defp filter_by_cursors(query, %{ending_before: nil, starting_after: nil}, _pk, _opts), do: query
 
-  defp extract_timestamp(repo, table, pk_type, pk, pk_value, chronological_field) do
+  defp extract_timestamp(repo, table, {pk_type, pk}, pk_value, chronological_field) do
     start_timestamp_native =
       repo.one from r in table,
         where: field(r, ^pk) == type(^pk_value, ^pk_type),
@@ -182,7 +182,7 @@ defmodule Ecto.Paging do
     from e in subquery(query), order_by: [{^order, ^chronological_field}]
   end
 
-  defp restore_query_order(order, pk_type, pk, query, _chronological_field) do
+  defp restore_query_order(order, _pk_type, pk, query, _chronological_field) do
     from e in subquery(query), order_by: [{^order, ^pk}]
   end
 
