@@ -124,9 +124,18 @@ defmodule Ecto.Paging do
     get_next_paging(query_result, Ecto.Paging.from_map(paging))
   end
 
+  defp get_next_cursors([], %Ecto.Paging.Cursors{ending_before: ending_before})
+      when not is_nil(ending_before) do
+      %Ecto.Paging.Cursors{ending_before: nil}
+  end
+
   defp get_next_cursors(query_result, %Ecto.Paging.Cursors{ending_before: ending_before})
       when not is_nil(ending_before) do
       %Ecto.Paging.Cursors{ending_before: List.first(query_result).id} # TODO: hardcoded `id` pk field
+  end
+
+  defp get_next_cursors([], _) do
+      %Ecto.Paging.Cursors{starting_after: nil}
   end
 
   defp get_next_cursors(query_result, _) do
