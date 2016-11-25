@@ -160,7 +160,7 @@ defmodule Ecto.Paging do
 
     {rev_order, q} = query
     |> where([c], field(c, ^chronological_field) < ^ts)
-    |> flip_orders(pk)
+    |> flip_orders(pk, pk_type, chronological_field)
 
     restore_query_order(rev_order, pk_type, pk, q, chronological_field)
   end
@@ -175,19 +175,27 @@ defmodule Ecto.Paging do
 
     {:ok, start_timestamp} = Ecto.DateTime.load(start_timestamp_native)
 
-    start_timestamp
+    Ecto.DateTime.to_string(start_timestamp)
   end
 
-  defp flip_orders(%Ecto.Query{order_bys: order_bys} = query, _pk)
+  defp flip_orders(%Ecto.Query{} = query, pk, :string, chronological_field) do
+    {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
+  end
+
+  defp flip_orders(%Ecto.Query{order_bys: order_bys} = query, _pk, _pk_type, _chronological_field)
        when is_list(order_bys) and length(order_bys) > 0 do
     {:desc, query}
   end
 
-  defp flip_orders(%Ecto.Query{} = query, pk) do
+  defp flip_orders(%Ecto.Query{} = query, pk, _pk_type, _chronological_field) do
     {:asc, query |> order_by([c], desc: field(c, ^pk))}
   end
 
   defp restore_query_order(order, :binary_id, _pk, query, chronological_field) do
+    from e in subquery(query), order_by: [{^order, ^chronological_field}]
+  end
+
+  defp restore_query_order(order, :string, _pk, query, chronological_field) do
     from e in subquery(query), order_by: [{^order, ^chronological_field}]
   end
 
