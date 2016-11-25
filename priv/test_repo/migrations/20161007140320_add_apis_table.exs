@@ -16,5 +16,13 @@ defmodule Gateway.DB.Repo.Migrations.AddApisTable do
 
       timestamps()
     end
+
+    create table(:apis_string, primary_key: false) do
+      add :id, :string, primary_key: true
+      add :name, :string
+      add :request, :map
+
+      timestamps()
+    end
   end
 end

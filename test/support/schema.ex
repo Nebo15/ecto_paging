@@ -41,3 +41,25 @@ defmodule Ecto.Paging.BinaryTestSchema do
     timestamps()
   end
 end
+
+defmodule Ecto.Paging.StringTestSchema do
+  @moduledoc """
+  API entity schema.
+  """
+
+  use Ecto.Schema
+
+  @primary_key {:id, :string, autogenerate: false}
+  schema "apis_string" do
+    field :name, :string
+
+    embeds_one :request, Request, primary_key: false do
+      field :scheme, :string
+      field :host, :string
+      field :port, :integer
+      field :path, :string
+    end
+
+    timestamps()
+  end
+end
