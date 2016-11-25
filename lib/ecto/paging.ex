@@ -178,7 +178,7 @@ defmodule Ecto.Paging do
     Ecto.DateTime.to_string(start_timestamp)
   end
 
-  defp flip_orders(%Ecto.Query{} = query, pk, :string, chronological_field) do
+  defp flip_orders(%Ecto.Query{} = query, _pk, :string, chronological_field) do
     {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
   end
 
