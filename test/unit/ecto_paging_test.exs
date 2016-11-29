@@ -384,7 +384,7 @@ defmodule Ecto.PagingTest do
 
   describe "Default ordering" do
     setup do
-      logs_attrs = [
+      records_attrs = [
         %{id: "2da21858-e1ae-4d8f-a87d-c3f94b4f433e"},
         %{id: "b36cc9c3-4214-41e3-b12e-03fc2e7f6fa1"},
         %{id: "77a3e1ec-bd4b-443e-bc2c-ca365cc7dc25"},
@@ -397,19 +397,19 @@ defmodule Ecto.PagingTest do
         %{id: "ff591a0e-8773-4b8e-9708-44a75be6f8c8"}
       ]
 
-      logs = Enum.map(logs_attrs, fn item ->
+      records = Enum.map(records_attrs, fn item ->
         %Ecto.Paging.StringTestSchema{id: item.id}
         |> Ecto.Paging.TestRepo.insert!()
       end)
 
-      {:ok, %{logs: logs}}
+      {:ok, %{records: records}}
     end
 
-    test "starting_after:2 + limit:5", %{logs: logs} do
-      id = Enum.at(logs, 2).id
+    test "starting_after:2 + limit:5", %{records: records} do
+      id = Enum.at(records, 2).id
 
       expected_records =
-        logs
+        records
         |> Enum.slice(3, 5)
         |> Enum.map(&Map.get(&1, :id))
 
