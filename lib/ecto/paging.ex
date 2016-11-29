@@ -150,6 +150,7 @@ defmodule Ecto.Paging do
 
     query
     |> where([c], field(c, ^chronological_field) > ^ts)
+    |> set_default_order({pk_type, pk}, chronological_field)
   end
 
   defp filter_by_cursors(%Ecto.Query{from: {table, schema}} = query, %{ending_before: ending_before}, pk,
@@ -201,6 +202,18 @@ defmodule Ecto.Paging do
 
   defp restore_query_order(order, _pk_type, pk, query, _chronological_field) do
     from e in subquery(query), order_by: [{^order, ^pk}]
+  end
+
+  defp set_default_order(query, {:binary_id, _pk}, chronological_field) do
+    from e in subquery(query), order_by: ^chronological_field
+  end
+
+  defp set_default_order(query, {:string, _pk}, chronological_field) do
+    from e in subquery(query), order_by: ^chronological_field
+  end
+
+  defp set_default_order(query, {_, pk}, chronological_field) do
+    from e in subquery(query), order_by: ^pk
   end
 
   defp get_primary_key(%Ecto.Query{from: {_, model}}) do

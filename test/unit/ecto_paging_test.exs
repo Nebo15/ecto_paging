@@ -382,6 +382,47 @@ defmodule Ecto.PagingTest do
     end
   end
 
+  describe "Default ordering" do
+    setup do
+      logs_attrs = [
+        %{id: "2da21858-e1ae-4d8f-a87d-c3f94b4f433e"},
+        %{id: "b36cc9c3-4214-41e3-b12e-03fc2e7f6fa1"},
+        %{id: "77a3e1ec-bd4b-443e-bc2c-ca365cc7dc25"},
+        %{id: "b7d63e4b-1364-4c6e-8e07-bee8eea8c21f"},
+        %{id: "e595eadd-a000-43e5-910b-31fc293d910b"},
+        %{id: "86106137-f4cd-483a-9a95-0b90601bf8ba"},
+        %{id: "1d27cbab-6192-47ba-9d32-f928b99ed666"},
+        %{id: "73a30d5c-42e6-4ba3-a969-cd01d82cdef1"},
+        %{id: "a97338cb-0665-42bc-91cc-1de726626553"},
+        %{id: "ff591a0e-8773-4b8e-9708-44a75be6f8c8"}
+      ]
+
+      logs = Enum.map(logs_attrs, fn item ->
+        %Ecto.Paging.StringTestSchema{id: item.id}
+        |> Ecto.Paging.TestRepo.insert!()
+      end)
+
+      {:ok, %{logs: logs}}
+    end
+
+    test "GET /requests?starting_after=2&limit=5", %{logs: logs} do
+      id = Enum.at(logs, 2).id
+
+      expected_records =
+        logs
+        |> Enum.slice(3, 5)
+        |> Enum.map(&Map.get(&1, :id))
+
+      actual_records =
+        Ecto.Paging.StringTestSchema
+        |> Ecto.Paging.TestRepo.paginate(%{limit: 5, cursors: %{starting_after: id}})
+        |> Ecto.Paging.TestRepo.all()
+        |> Enum.map(&Map.get(&1, :id))
+
+      assert expected_records == actual_records
+    end
+  end
+
   defp get_query do
     from p in Ecto.Paging.TestSchema
   end
