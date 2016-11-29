@@ -405,7 +405,7 @@ defmodule Ecto.PagingTest do
       {:ok, %{logs: logs}}
     end
 
-    test "GET /requests?starting_after=2&limit=5", %{logs: logs} do
+    test "starting_after:2 + limit:5", %{logs: logs} do
       id = Enum.at(logs, 2).id
 
       expected_records =
