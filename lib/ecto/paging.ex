@@ -204,16 +204,15 @@ defmodule Ecto.Paging do
     from e in subquery(query), order_by: [{^order, ^pk}]
   end
 
-  defp set_default_order(query, {:binary_id, _pk}, chronological_field) do
-    from e in subquery(query), order_by: ^chronological_field
-  end
+  defp set_default_order(query, {pk_type, pk}, default_field) do
+    order_by =
+      case {pk_type, pk} do
+        {:binary_id, _} -> default_field
+        {:string, _} -> default_field
+        {_, pk} -> pk
+      end
 
-  defp set_default_order(query, {:string, _pk}, chronological_field) do
-    from e in subquery(query), order_by: ^chronological_field
-  end
-
-  defp set_default_order(query, {_, pk}, chronological_field) do
-    from e in subquery(query), order_by: ^pk
+    from e in subquery(query), order_by: ^order_by
   end
 
   defp get_primary_key(%Ecto.Query{from: {_, model}}) do
