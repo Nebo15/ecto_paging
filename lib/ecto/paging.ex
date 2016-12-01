@@ -205,15 +205,15 @@ defmodule Ecto.Paging do
   end
 
   defp set_default_order(query, :binary_id, _pk, chronological_field) do
-    from e in subquery(query), order_by: ^chronological_field
+    query |> order_by([c], asc: field(c, ^chronological_field))
   end
 
   defp set_default_order(query, :string, _pk, chronological_field) do
-    from e in subquery(query), order_by: ^chronological_field
+    query |> order_by([c], asc: field(c, ^chronological_field))
   end
 
   defp set_default_order(query, _, pk, chronological_field) do
-    from e in subquery(query), order_by: ^pk
+    query |> order_by([c], asc: field(c, ^pk))
   end
 
   defp get_primary_key(%Ecto.Query{from: {_, model}}) do
