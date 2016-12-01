@@ -193,15 +193,15 @@ defmodule Ecto.Paging do
   end
 
   defp restore_query_order(order, :binary_id, _pk, query, chronological_field) do
-    from e in subquery(query), order_by: [{^order, ^chronological_field}]
+    query |> order_by([c], [{^order, field(c, ^chronological_field)}])
   end
 
   defp restore_query_order(order, :string, _pk, query, chronological_field) do
-    from e in subquery(query), order_by: [{^order, ^chronological_field}]
+    query |> order_by([c], [{^order, field(c, ^chronological_field)}])
   end
 
   defp restore_query_order(order, _pk_type, pk, query, _chronological_field) do
-    from e in subquery(query), order_by: [{^order, ^pk}]
+    query |> order_by([c], [{^order, field(c, ^pk)}])
   end
 
   defp set_default_order(query, :binary_id, _pk, chronological_field) do
