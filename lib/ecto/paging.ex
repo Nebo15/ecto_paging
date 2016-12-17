@@ -212,7 +212,7 @@ defmodule Ecto.Paging do
     query |> order_by([c], asc: field(c, ^chronological_field))
   end
 
-  defp set_default_order(query, _, pk, chronological_field) do
+  defp set_default_order(query, _, pk, _chronological_field) do
     query |> order_by([c], asc: field(c, ^pk))
   end
 
