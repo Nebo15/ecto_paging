@@ -146,24 +146,33 @@ defmodule Ecto.Paging do
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(starting_after) do
     pk_type = schema.__schema__(:type, pk)
-    ts = extract_timestamp(repo, table, {pk_type, pk}, starting_after, chronological_field)
 
-    query
-    |> where([c], field(c, ^chronological_field) > ^ts)
-    |> set_default_order(pk_type, pk, chronological_field)
+    case extract_timestamp(repo, table, {pk_type, pk}, starting_after, chronological_field) do
+      {:ok, ts} ->
+        query
+        |> where([c], field(c, ^chronological_field) > ^ts)
+        |> set_default_order(pk_type, pk, chronological_field)
+      {:error, :not_found} ->
+        query
+        |> where([c], true == false)
+    end
   end
 
   defp filter_by_cursors(%Ecto.Query{from: {table, schema}} = query, %{ending_before: ending_before}, pk,
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(ending_before) do
     pk_type = schema.__schema__(:type, pk)
-    ts = extract_timestamp(repo, table, {pk_type, pk}, ending_before, chronological_field)
+    case extract_timestamp(repo, table, {pk_type, pk}, ending_before, chronological_field) do
+      {:ok, ts} ->
+        {rev_order, q} = query
+        |> where([c], field(c, ^chronological_field) < ^ts)
+        |> flip_orders(pk, pk_type, chronological_field)
 
-    {rev_order, q} = query
-    |> where([c], field(c, ^chronological_field) < ^ts)
-    |> flip_orders(pk, pk_type, chronological_field)
-
-    restore_query_order(rev_order, pk_type, pk, q, chronological_field)
+        restore_query_order(rev_order, pk_type, pk, q, chronological_field)
+      {:error, :not_found} ->
+        query
+        |> where([c], true == false)
+    end
   end
 
   defp filter_by_cursors(query, %{ending_before: nil, starting_after: nil}, _pk, _opts), do: query
@@ -174,9 +183,13 @@ defmodule Ecto.Paging do
         where: field(r, ^pk) == type(^pk_value, ^pk_type),
         select: field(r, ^chronological_field)
 
-    {:ok, start_timestamp} = Ecto.DateTime.load(start_timestamp_native)
-
-    Ecto.DateTime.to_string(start_timestamp)
+    case start_timestamp_native do
+      nil ->
+        {:error, :not_found}
+      timestamp ->
+        {:ok, start_timestamp} = Ecto.DateTime.load(timestamp)
+        {:ok, Ecto.DateTime.to_string(start_timestamp)}
+    end
   end
 
   defp flip_orders(%Ecto.Query{} = query, _pk, :string, chronological_field) do

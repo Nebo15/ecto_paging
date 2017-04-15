@@ -3,6 +3,29 @@ defmodule Ecto.PagingTest do
   alias Ecto.Paging
   doctest Ecto.Paging
 
+  test "works on empty list" do
+    res = get_query()
+    |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 50})
+    |> Ecto.Paging.TestRepo.all
+
+    assert res == []
+  end
+
+  test "works with corrupted cursors" do
+    query =
+      get_query()
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{
+        limit: 50,
+        cursors: %Ecto.Paging.Cursors{starting_after: 50, ending_before: 50}
+      })
+
+    assert Ecto.Paging.TestRepo.all(query) == []
+
+    insert_records()
+
+    assert Ecto.Paging.TestRepo.all(query) == []
+  end
+
   describe "converts from map" do
     test "with valid root struct" do
       assert %Ecto.Paging{limit: 50} = Paging.from_map(%Ecto.Paging{limit: 50})
@@ -195,21 +218,21 @@ defmodule Ecto.PagingTest do
     end
 
     test "works with schema" do
-      {res, _paging} = Ecto.Paging.TestSchema
+      {res, _paging} = Ecto.Paging.UTCTestSchema
       |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 101})
 
       assert length(res) == 101
     end
 
     test "has default limit" do
-      {res, _paging} = Ecto.Paging.TestSchema
+      {res, _paging} = Ecto.Paging.UTCTestSchema
       |> Ecto.Paging.TestRepo.page(%{})
 
       assert length(res) == 50
     end
 
     test "works with dropped limit" do
-      {res, _paging} = Ecto.Paging.TestSchema
+      {res, _paging} = Ecto.Paging.UTCTestSchema
       |> Ecto.Paging.TestRepo.page(%{limit: nil})
 
       assert length(res) == 150

@@ -1,8 +1,5 @@
 defmodule Ecto.Paging.TestSchema do
-  @moduledoc """
-  API entity schema.
-  """
-
+  @moduledoc false
   use Ecto.Schema
 
   schema "apis" do
@@ -19,15 +16,29 @@ defmodule Ecto.Paging.TestSchema do
   end
 end
 
-defmodule Ecto.Paging.BinaryTestSchema do
-  @moduledoc """
-  API entity schema.
-  """
+defmodule Ecto.Paging.UTCTestSchema do
+  @moduledoc false
+  use Ecto.Schema
 
+  schema "apis_utc" do
+    field :name, :string
+
+    embeds_one :request, Request, primary_key: false do
+      field :scheme, :string
+      field :host, :string
+      field :port, :integer
+      field :path, :string
+    end
+
+    timestamps(type: :utc_datetime)
+  end
+end
+
+defmodule Ecto.Paging.BinaryTestSchema do
+  @moduledoc false
   use Ecto.Schema
 
   @primary_key {:id, :binary_id, autogenerate: true}
-  @foreign_key_type :binary_id
   schema "apis_binary" do
     field :name, :string
 
@@ -43,10 +54,7 @@ defmodule Ecto.Paging.BinaryTestSchema do
 end
 
 defmodule Ecto.Paging.StringTestSchema do
-  @moduledoc """
-  API entity schema.
-  """
-
+  @moduledoc false
   use Ecto.Schema
 
   @primary_key {:id, :string, autogenerate: false}
