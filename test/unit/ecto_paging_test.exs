@@ -163,6 +163,117 @@ defmodule Ecto.PagingTest do
     end
   end
 
+  describe "paginator on integer id with UTC chronological fields" do
+    setup do
+      insert_records_with_utc_timestamps()
+      :ok
+    end
+
+    test "limits results" do
+      res1 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 50})
+      |> Ecto.Paging.TestRepo.all
+
+      assert length(res1) == 50
+
+      res2 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 101})
+      |> Ecto.Paging.TestRepo.all
+
+      {res3, _paging} = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 101})
+
+      assert res2 == res3
+
+      assert length(res2) == 101
+
+      assert 0 == 0..49
+      |> Enum.filter(fn index ->
+        Enum.at(res1, index).id != Enum.at(res2, index).id
+      end)
+      |> length
+    end
+
+    test "works with schema" do
+      {res, _paging} = Ecto.Paging.TestSchema
+      |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 101})
+
+      assert length(res) == 101
+    end
+
+    test "has default limit" do
+      {res, _paging} = Ecto.Paging.TestSchema
+      |> Ecto.Paging.TestRepo.page(%{})
+
+      assert length(res) == 50
+    end
+
+    test "works with dropped limit" do
+      {res, _paging} = Ecto.Paging.TestSchema
+      |> Ecto.Paging.TestRepo.page(%{limit: nil})
+
+      assert length(res) == 150
+    end
+
+    test "paginates forward with starting after" do
+      res1 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
+      |> Ecto.Paging.TestRepo.all
+
+      assert length(res1) == 150
+
+      res2 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
+      |> Ecto.Paging.TestRepo.all
+
+      {res3, paging} = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
+
+      assert res2 == res3
+
+      assert length(res2) == 50
+
+      # Second query should be subset of first one
+      assert 0 == 0..49
+      |> Enum.filter(fn index ->
+        Enum.at(res1, index + 50).id != Enum.at(res2, index).id
+      end)
+      |> length
+
+      assert List.last(res2).id == paging.cursors.starting_after
+      assert paging.has_more
+    end
+
+    test "paginates back with ending before" do
+      res1 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
+      |> Ecto.Paging.TestRepo.all
+
+      assert length(res1) == 150
+
+      res2 = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+      |> Ecto.Paging.TestRepo.all
+
+      {res3, paging} = get_query_with_utc_timestamps()
+      |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      assert res2 == res3
+
+      assert length(res2) == 50
+
+      # Second query should be subset of first one
+      assert 0 == 0..49
+      |> Enum.filter(fn index ->
+        Enum.at(res1, index + 99).id != Enum.at(res2, index).id
+      end)
+      |> length
+
+      assert List.first(res2).id == paging.cursors.ending_before
+      assert paging.has_more
+    end
+  end
+
   describe "paginator on binary id" do
     setup do
       insert_records_with_binary_id()
@@ -427,8 +538,16 @@ defmodule Ecto.PagingTest do
     from p in Ecto.Paging.TestSchema
   end
 
+  defp get_query_with_utc_timestamps do
+    from p in Ecto.Paging.UTCTestSchema
+  end
+
   defp insert_records do
     for _ <- 1..150, do: Ecto.Paging.TestRepo.insert(%Ecto.Paging.TestSchema{name: "abc"})
+  end
+
+  defp insert_records_with_utc_timestamps do
+    for _ <- 1..150, do: Ecto.Paging.TestRepo.insert(%Ecto.Paging.UTCTestSchema{name: "abc"})
   end
 
   defp get_query_with_binary_id do

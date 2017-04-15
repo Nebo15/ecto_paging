@@ -6,7 +6,7 @@ defmodule Ecto.Paging.Mixfile do
   def project do
     [app: :ecto_paging,
      description: "Cursor-based pagination for Ecto.",
-     package: package,
+     package: package(),
      version: @version,
      elixir: "~> 1.3",
      elixirc_paths: elixirc_paths(Mix.env),
