@@ -1,7 +1,7 @@
 defmodule Ecto.Paging.Mixfile do
   use Mix.Project
 
-  @version "0.6.1"
+  @version "0.6.2"
 
   def project do
     [app: :ecto_paging,
