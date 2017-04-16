@@ -154,7 +154,7 @@ defmodule Ecto.Paging do
         |> set_default_order(pk_type, pk, chronological_field)
       {:error, :not_found} ->
         query
-        |> where([c], true == false)
+        |> where([c], false)
     end
   end
 
@@ -171,7 +171,7 @@ defmodule Ecto.Paging do
         restore_query_order(rev_order, pk_type, pk, q, chronological_field)
       {:error, :not_found} ->
         query
-        |> where([c], true == false)
+        |> where([c], false)
     end
   end
 
