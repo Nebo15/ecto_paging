@@ -165,9 +165,8 @@ defmodule Ecto.Paging do
     case extract_timestamp(repo, table, {pk_type, pk}, ending_before, chronological_field) do
       {:ok, ts} ->
         {rev_order, q} = query
-        |> where([c], field(c, ^chronological_field) < ^ts)
+        |> find_where_order(chronological_field, ts)
         |> flip_orders(pk, pk_type, chronological_field)
-
         restore_query_order(rev_order, pk_type, pk, q, chronological_field)
       {:error, :not_found} ->
         query
@@ -192,13 +191,34 @@ defmodule Ecto.Paging do
     end
   end
 
+  def find_where_order(%Ecto.Query{order_bys: order_bys} = query, chronological_field, timestamp)
+      when is_list(order_bys) and length(order_bys) > 0 do
+    case get_order_from_expression(order_bys) do
+      :asc  -> query |> where([c], field(c, ^chronological_field) < ^timestamp)
+      :desc -> query |> where([c], field(c, ^chronological_field) > ^timestamp)
+    end
+  end
+
+  def find_where_order(%Ecto.Query{} = query, chronological_field, timestamp) do
+    query |> where([c], field(c, ^chronological_field) < ^timestamp)
+  end
+
   defp flip_orders(%Ecto.Query{} = query, _pk, :string, chronological_field) do
     {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
   end
 
-  defp flip_orders(%Ecto.Query{order_bys: order_bys} = query, _pk, _pk_type, _chronological_field)
+  defp flip_orders(%Ecto.Query{order_bys: order_bys} = query, _pk, _pk_type, chronological_field)
        when is_list(order_bys) and length(order_bys) > 0 do
-    {:desc, query}
+    order = get_order_from_expression(order_bys)
+    query = case order do
+      :asc -> query |> exclude(:order_by) |> order_by([c], desc: field(c, ^chronological_field))
+      :desc -> query
+    end
+    {order, query}
+  end
+
+  defp flip_orders(%Ecto.Query{} = query, _pk, :binary_id, chronological_field) do
+    {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
   end
 
   defp flip_orders(%Ecto.Query{} = query, pk, _pk_type, _chronological_field) do
@@ -233,5 +253,10 @@ defmodule Ecto.Paging do
     :primary_key
     |> model.__schema__
     |> List.first
+  end
+
+  defp get_order_from_expression(expression) do
+    [%Ecto.Query.QueryExpr{expr: expr} | _t] = expression
+    expr |> Keyword.keys |> Enum.at(0)
   end
 end

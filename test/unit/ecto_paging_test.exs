@@ -1,5 +1,5 @@
 defmodule Ecto.PagingTest do
-  use Ecto.Paging.ModelCase, async: true
+  use Ecto.Paging.ModelCase, async: false
   alias Ecto.Paging
   doctest Ecto.Paging
 
@@ -24,6 +24,20 @@ defmodule Ecto.PagingTest do
     insert_records()
 
     assert Ecto.Paging.TestRepo.all(query) == []
+  end
+
+  test "explictly define asc order works" do
+    records = insert_records()
+    {:ok, record} = List.last(records)
+    {{:ok, penultimate_record}, _list} = List.pop_at(records, length(records) - 2)
+    res1 =
+      get_query()
+      |> Ecto.Query.order_by(asc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: record.id}})
+      |> Ecto.Paging.TestRepo.all
+    assert penultimate_record == Enum.at(res1, 49)
+      # Ordering not influencing pagination
+    assert length(res1) == 50
   end
 
   describe "converts from map" do
@@ -174,6 +188,12 @@ defmodule Ecto.PagingTest do
 
       assert length(res2) == 50
 
+      {penultimate_record, _list} = List.pop_at(res1, length(res1) - 2)
+      {start_record, _list} = List.pop_at(res1, length(res1) - 51)
+      assert penultimate_record in res2
+      assert start_record in res2
+      refute List.last(res1) in res2
+
       # Second query should be subset of first one
       assert 0 == 0..49
       |> Enum.filter(fn index ->
@@ -183,6 +203,26 @@ defmodule Ecto.PagingTest do
 
       assert List.first(res2).id == paging.cursors.ending_before
       assert paging.has_more
+    end
+
+    test "paginate back with ending before, but with order by DESC" do
+      # Order by desc query and paginate from first elem
+      res1 = get_query()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 5})
+      |> Ecto.Paging.TestRepo.all
+
+      # Ordering not influencing pagination
+      assert length(res1) == 5
+
+      res2 = get_query()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 5, cursors: %{ending_before: List.last(res1).id}})
+      |> Ecto.Paging.TestRepo.all
+
+      # %{ending_before} return inversed result properly
+      assert length(res2) == 4
+      assert List.first(res1) == List.first(res2)
     end
   end
 
@@ -295,6 +335,26 @@ defmodule Ecto.PagingTest do
       assert List.first(res2).id == paging.cursors.ending_before
       assert paging.has_more
     end
+
+    test "paginate back with ending before, but with order by DESC" do
+      # Order by desc query and paginate from first elem
+      res1 = get_query_with_utc_timestamps()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50})
+      |> Ecto.Paging.TestRepo.all
+
+      # Ordering not influencing pagination
+      assert length(res1) == 50
+
+      res2 = get_query_with_utc_timestamps()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+      |> Ecto.Paging.TestRepo.all
+
+      # %{ending_before} return inversed result properly
+      assert length(res2) == 49
+      assert List.first(res1) == List.first(res2)
+    end
   end
 
   describe "paginator on binary id" do
@@ -389,6 +449,13 @@ defmodule Ecto.PagingTest do
       |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
       |> Ecto.Paging.TestRepo.all
 
+      {penultimate_record, _list} = List.pop_at(res1, length(res1) - 2)
+      {start_record, _list} = List.pop_at(res1, length(res1) - 51)
+
+      assert penultimate_record in res2
+      assert start_record in res2
+      refute List.last(res1) in res2
+
       {res3, paging} = get_query_with_binary_id()
       |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
 
@@ -396,19 +463,34 @@ defmodule Ecto.PagingTest do
 
       assert length(res2) == 50
 
-      # Second query should be subset of first one
-      # TODO
-      # assert 0 == 0..49
-      # |> Enum.filter(fn index ->
-      #   IO.inspect {Enum.at(res1, index + 99).id, Enum.at(res2, index).id}
-      #   IO.inspect {Enum.at(res1, index + 99).inserted_at, Enum.at(res2, index).inserted_at}
-      #   IO.inspect "======"
-      #   Enum.at(res1, index + 99).id != Enum.at(res2, index).id
-      # end)
-      # |> length
+      assert 0 == 0..49
+      |> Enum.filter(fn index ->
+        Enum.at(res1, index + 99).id != Enum.at(res2, index).id
+      end)
+      |> length
 
       assert List.first(res2).id == paging.cursors.ending_before
       assert paging.has_more
+    end
+
+    test "paginate back with ending before, but with order by DESC" do
+      # Order by desc query and paginate from first elem
+      res1 = get_query_with_binary_id()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50})
+      |> Ecto.Paging.TestRepo.all
+
+      # Ordering not influencing pagination
+      assert length(res1) == 50
+
+      res2 = get_query_with_binary_id()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+      |> Ecto.Paging.TestRepo.all
+
+      # %{ending_before} return inversed result properly
+      assert length(res2) == 49
+      assert List.first(res1) == List.first(res2)
     end
   end
 
