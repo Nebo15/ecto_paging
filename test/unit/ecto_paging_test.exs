@@ -488,9 +488,30 @@ defmodule Ecto.PagingTest do
       |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
       |> Ecto.Paging.TestRepo.all
 
+      {penultimate_record, _list} = List.pop_at(res1, length(res1) - 2)
+      start_record = List.first(res1)
+
+      assert penultimate_record in res2
+      assert start_record in res2
+      refute List.last(res1) in res2
+
       # %{ending_before} return inversed result properly
       assert length(res2) == 49
       assert List.first(res1) == List.first(res2)
+
+      cursors = %Ecto.Paging.Cursors{starting_after: nil, ending_before: List.last(res1).id}
+      page = %Ecto.Paging{limit: 50, cursors: cursors}
+
+      query = get_query_with_binary_id()
+      {res3, _page} = query
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.page(page)
+      assert length(res3) == 49
+
+      assert penultimate_record in res3
+      assert start_record in res3
+      refute List.last(res1) in res3
+
     end
   end
 
