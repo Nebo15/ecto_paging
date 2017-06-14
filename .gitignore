@@ -43,3 +43,7 @@ rel/*/
 # Don't commit file uploads
 uploads/
 !uploads/.gitkeep
+
+# Don't commit test env config
+config/test.exs
+docker-compose.yml
