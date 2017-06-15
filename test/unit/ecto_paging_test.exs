@@ -180,6 +180,47 @@ defmodule Ecto.PagingTest do
       assert paging.has_more
     end
 
+    test "paginates forward with starting after with ordering" do
+      res1 =
+        get_query()
+        |> Ecto.Query.order_by(asc: :inserted_at)
+        |> Ecto.Paging.TestRepo.paginate(%Ecto.Paging{limit: 150})
+        |> Ecto.Paging.TestRepo.all
+
+      assert length(res1) == 150
+
+      starting_record = Enum.at(res1, 49)
+      second_record = Enum.at(res1, 50)
+
+      res2 =
+        get_query()
+        |> Ecto.Query.order_by(asc: :inserted_at)
+        |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{starting_after: starting_record.id}})
+        |> Ecto.Paging.TestRepo.all
+
+      {res3, paging} =
+        get_query()
+        |> Ecto.Query.order_by(asc: :inserted_at)
+        |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: starting_record.id}})
+
+      assert res2 == res3
+      assert second_record in res2
+      refute starting_record in res2
+
+      assert length(res2) == 50
+
+      # Second query should be subset of first one
+      assert 0 ==
+        0..49
+        |> Enum.filter(fn index ->
+          Enum.at(res1, index + 50).id != Enum.at(res2, index).id
+        end)
+        |> length
+
+      assert List.last(res2).id == paging.cursors.starting_after
+      assert paging.has_more
+    end
+
     test "paginates back with ending before" do
       res1 =
         get_query()
@@ -742,6 +783,35 @@ defmodule Ecto.PagingTest do
       actual_records =
         Ecto.Paging.StringTestSchema
         |> Ecto.Paging.TestRepo.paginate(%{limit: 5, cursors: %{starting_after: id}})
+        |> Ecto.Paging.TestRepo.all()
+        |> Enum.map(&Map.get(&1, :id))
+
+      actual_records_with_asc =
+        Ecto.Paging.StringTestSchema
+        |> Ecto.Query.order_by(asc: :inserted_at)
+        |> Ecto.Paging.TestRepo.paginate(%{limit: 5, cursors: %{starting_after: id}})
+        |> Ecto.Paging.TestRepo.all()
+        |> Enum.map(&Map.get(&1, :id))
+
+      assert expected_records == actual_records
+      assert expected_records == actual_records_with_asc
+    end
+
+    test "ending_before:3", %{records: records} do
+      id = Enum.at(records, 2).id
+
+      expected_records =
+        records
+        |> Enum.slice(3, 5)
+        |> Enum.reverse
+        |> Enum.map(&Map.get(&1, :id))
+
+      assert length(expected_records) == 5
+
+      actual_records =
+        Ecto.Paging.StringTestSchema
+        |> Ecto.Query.order_by(desc: :inserted_at)
+        |> Ecto.Paging.TestRepo.paginate(%{limit: 5, cursors: %{ending_before: id}})
         |> Ecto.Paging.TestRepo.all()
         |> Enum.map(&Map.get(&1, :id))
 
