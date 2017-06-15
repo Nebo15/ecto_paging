@@ -6,5 +6,5 @@ defmodule Ecto.Paging.TestRepo do
   """
 
   use Ecto.Repo, otp_app: :ecto_paging
-  use Ecto.Pagging.Repo
+  use Ecto.Paging.Repo
 end

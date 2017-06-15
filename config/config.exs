@@ -10,5 +10,5 @@ config :ecto_paging, Ecto.Paging.TestRepo,
 
 config :ecto_paging, ecto_repos: [Ecto.Paging.TestRepo]
 
-config :logger, level: :debug
+config :logger, level: :error
 config :ex_unit, capture_log: true
