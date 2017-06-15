@@ -1,4 +1,4 @@
-defmodule Ecto.Pagging.Repo do
+defmodule Ecto.Paging.Repo do
   @moduledoc """
   This module provides macro that injects `paginate/2` and `page/3` methods into Ecto.Repo's.
   """
@@ -14,7 +14,7 @@ defmodule Ecto.Pagging.Repo do
       end
 
       @doc """
-      Fetches all entries from the data store matching the given query with applied Pagging.
+      Fetches all entries from the data store matching the given query with applied Paging.
 
       May raise `Ecto.QueryError` if query validation fails.
 

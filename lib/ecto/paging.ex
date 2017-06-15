@@ -7,7 +7,7 @@ defmodule Ecto.Paging do
 
       defmodule MyRepo do
         use Ecto.Repo, otp_app: :my_app
-        use Ecto.Pagging.Repo # This string adds `paginate/2` method.
+        use Ecto.Paging.Repo # This string adds `paginate/2` method.
       end
 
   2. Paginate!
@@ -90,10 +90,7 @@ defmodule Ecto.Paging do
     |> filter_by_cursors(cursors, pk, opts)
   end
 
-  def paginate(%Ecto.Query{} = query, %Ecto.Paging{}, _opts) do
-    query
-  end
-
+  def paginate(%Ecto.Query{} = query, %Ecto.Paging{}, _opts), do: query
   def paginate(%Ecto.Query{} = query, paging, opts) when is_map(paging) do
     paginate(query, Ecto.Paging.from_map(paging), opts)
   end
@@ -142,19 +139,19 @@ defmodule Ecto.Paging do
       %Ecto.Paging.Cursors{starting_after: List.last(query_result).id}
   end
 
-  defp filter_by_cursors(%Ecto.Query{from: {table, schema}} = query, %{starting_after: starting_after}, pk,
+  defp filter_by_cursors(%Ecto.Query{from: {table, schema}, order_bys: order_bys} = query,
+                        %{starting_after: starting_after}, pk,
                         [repo: repo, chronological_field: chronological_field])
        when not is_nil(starting_after) do
     pk_type = schema.__schema__(:type, pk)
-
     case extract_timestamp(repo, table, {pk_type, pk}, starting_after, chronological_field) do
       {:ok, ts} ->
+        order = get_order_from_expression(order_bys)
         query
-        |> where([c], field(c, ^chronological_field) > ^ts)
-        |> set_default_order(pk_type, pk, chronological_field)
+        |> find_where_order(chronological_field, ts, :starting_after)
+        |> set_default_order(order, pk_type, pk, chronological_field)
       {:error, :not_found} ->
-        query
-        |> where([c], false)
+        where(query, [c], false)
     end
   end
 
@@ -165,12 +162,11 @@ defmodule Ecto.Paging do
     case extract_timestamp(repo, table, {pk_type, pk}, ending_before, chronological_field) do
       {:ok, ts} ->
         {rev_order, q} = query
-        |> find_where_order(chronological_field, ts)
+        |> find_where_order(chronological_field, ts, :ending_before)
         |> flip_orders(pk, pk_type, chronological_field)
         restore_query_order(rev_order, pk_type, pk, q, chronological_field)
       {:error, :not_found} ->
-        query
-        |> where([c], false)
+        where(query, [c], false)
     end
   end
 
@@ -191,38 +187,49 @@ defmodule Ecto.Paging do
     end
   end
 
-  def find_where_order(%Ecto.Query{order_bys: order_bys} = query, chronological_field, timestamp)
+  def find_where_order(%Ecto.Query{order_bys: order_bys} = query, chronological_field, timestamp, :ending_before)
       when is_list(order_bys) and length(order_bys) > 0 do
     case get_order_from_expression(order_bys) do
-      :asc  -> query |> where([c], field(c, ^chronological_field) < ^timestamp)
-      :desc -> query |> where([c], field(c, ^chronological_field) > ^timestamp)
+      :asc  -> where(query, [c], field(c, ^chronological_field) < ^timestamp)
+      :desc -> where(query, [c], field(c, ^chronological_field) > ^timestamp)
     end
   end
 
-  def find_where_order(%Ecto.Query{} = query, chronological_field, timestamp) do
-    query |> where([c], field(c, ^chronological_field) < ^timestamp)
+  def find_where_order(%Ecto.Query{order_bys: order_bys} = query, chronological_field, timestamp, :starting_after)
+      when is_list(order_bys) and length(order_bys) > 0 do
+    case get_order_from_expression(order_bys) do
+      :asc  -> where(query, [c], field(c, ^chronological_field) > ^timestamp)
+      :desc -> where(query, [c], field(c, ^chronological_field) < ^timestamp)
+    end
   end
 
-  defp flip_orders(%Ecto.Query{} = query, _pk, :string, chronological_field) do
-    {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
+  def find_where_order(%Ecto.Query{} = query, chronological_field, timestamp, :ending_before) do
+    where(query, [c], field(c, ^chronological_field) < ^timestamp)
+  end
+  def find_where_order(%Ecto.Query{} = query, chronological_field, timestamp, :starting_after) do
+    where(query, [c], field(c, ^chronological_field) > ^timestamp)
   end
 
   defp flip_orders(%Ecto.Query{order_bys: order_bys} = query, _pk, _pk_type, chronological_field)
        when is_list(order_bys) and length(order_bys) > 0 do
     order = get_order_from_expression(order_bys)
     query = case order do
-      :asc -> query |> exclude(:order_by) |> order_by([c], desc: field(c, ^chronological_field))
-      :desc -> query
+      :asc  -> query |> exclude(:order_by) |> order_by([c], desc: field(c, ^chronological_field))
+      :desc -> exclude(query, :order_by)
     end
     {order, query}
   end
 
+   defp flip_orders(%Ecto.Query{} = query, _pk, :string, chronological_field) do
+    {:asc, order_by(query, [c], desc: field(c, ^chronological_field))}
+  end
+
   defp flip_orders(%Ecto.Query{} = query, _pk, :binary_id, chronological_field) do
-    {:asc, query |> order_by([c], desc: field(c, ^chronological_field))}
+    {:asc, order_by(query, [c], desc: field(c, ^chronological_field))}
   end
 
   defp flip_orders(%Ecto.Query{} = query, pk, _pk_type, _chronological_field) do
-    {:asc, query |> order_by([c], desc: field(c, ^pk))}
+    {:asc, order_by(query, [c], desc: field(c, ^pk))}
   end
 
   defp restore_query_order(order, :binary_id, _pk, query, chronological_field) do
@@ -237,16 +244,16 @@ defmodule Ecto.Paging do
     from e in subquery(query), order_by: [{^order, ^pk}]
   end
 
-  defp set_default_order(query, :binary_id, _pk, chronological_field) do
-    query |> order_by([c], asc: field(c, ^chronological_field))
+  defp set_default_order(query, order, :binary_id, _pk, chronological_field) do
+    order_by(query, [{^order, ^chronological_field}])
   end
 
-  defp set_default_order(query, :string, _pk, chronological_field) do
-    query |> order_by([c], asc: field(c, ^chronological_field))
+  defp set_default_order(query, order, :string, _pk, chronological_field) do
+    order_by(query, [{^order, ^chronological_field}])
   end
 
-  defp set_default_order(query, _, pk, _chronological_field) do
-    query |> order_by([c], asc: field(c, ^pk))
+  defp set_default_order(query, order, _, pk, _chronological_field) do
+    order_by(query, [{^order, ^pk}])
   end
 
   defp get_primary_key(%Ecto.Query{from: {_, model}}) do
@@ -255,8 +262,13 @@ defmodule Ecto.Paging do
     |> List.first
   end
 
+  defp get_order_from_expression([]), do: :asc
   defp get_order_from_expression(expression) do
     [%Ecto.Query.QueryExpr{expr: expr} | _t] = expression
-    expr |> Keyword.keys |> Enum.at(0)
+    case {Keyword.has_key?(expr, :asc), Keyword.has_key?(expr, :desc)} do
+      {true, false} -> :asc
+      {false, true} -> :desc
+      _ -> :asc
+    end
   end
 end

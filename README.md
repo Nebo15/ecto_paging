@@ -11,7 +11,7 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
     ```elixir
     defmodule MyRepo do
       use Ecto.Repo, otp_app: :my_app
-      use Ecto.Pagging.Repo # This string adds `paginate/2` and `page/3` methods.
+      use Ecto.Paging.Repo # This string adds `paginate/2` and `page/3` methods.
     end
     ```
 
