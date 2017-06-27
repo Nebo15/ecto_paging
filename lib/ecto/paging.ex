@@ -110,10 +110,11 @@ defmodule Ecto.Paging do
   end
 
   def get_next_paging(query_result, %Ecto.Paging{limit: limit, cursors: cursors}) when is_list(query_result) do
+    has_more = length(query_result) >= limit
     %Ecto.Paging{
       limit: limit,
-      has_more: length(query_result) >= limit,
-      cursors: get_next_cursors(query_result, cursors)
+      has_more: has_more,
+      cursors: get_next_cursors(query_result, cursors, has_more)
     }
   end
 
@@ -121,22 +122,18 @@ defmodule Ecto.Paging do
     get_next_paging(query_result, Ecto.Paging.from_map(paging))
   end
 
-  defp get_next_cursors([], %Ecto.Paging.Cursors{ending_before: ending_before})
-      when not is_nil(ending_before) do
-      %Ecto.Paging.Cursors{ending_before: nil}
+  defp get_next_cursors([], _, _) do
+      %Ecto.Paging.Cursors{starting_after: nil, ending_before: nil}
   end
 
-  defp get_next_cursors(query_result, %Ecto.Paging.Cursors{ending_before: ending_before})
-      when not is_nil(ending_before) do
-      %Ecto.Paging.Cursors{ending_before: List.first(query_result).id} # TODO: hardcoded `id` pk field
+  defp get_next_cursors(query_result, _, false) do
+    %Ecto.Paging.Cursors{starting_after: List.last(query_result).id,
+                          ending_before: nil}
   end
 
-  defp get_next_cursors([], _) do
-      %Ecto.Paging.Cursors{starting_after: nil}
-  end
-
-  defp get_next_cursors(query_result, _) do
-      %Ecto.Paging.Cursors{starting_after: List.last(query_result).id}
+  defp get_next_cursors(query_result, _, true) do
+      %Ecto.Paging.Cursors{starting_after: List.last(query_result).id,
+                           ending_before: List.first(query_result).id}
   end
 
   defp filter_by_cursors(%Ecto.Query{from: {table, schema}, order_bys: order_bys} = query,
