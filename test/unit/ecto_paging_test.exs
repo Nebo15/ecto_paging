@@ -162,6 +162,10 @@ defmodule Ecto.PagingTest do
         get_query()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: starting_record.id}})
 
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 50).id
+      assert cursors.starting_after == Enum.at(res1, 99).id
+
       assert res2 == res3
       assert second_record in res2
       refute starting_record in res2
@@ -203,6 +207,10 @@ defmodule Ecto.PagingTest do
         |> Ecto.Query.order_by(asc: :inserted_at)
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: starting_record.id}})
 
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 50).id
+      assert cursors.starting_after == Enum.at(res1, 99).id
+
       assert res2 == res3
       assert second_record in res2
       refute starting_record in res2
@@ -237,6 +245,10 @@ defmodule Ecto.PagingTest do
       {res3, paging} =
         get_query()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 99).id
+      assert cursors.starting_after == Enum.at(res1, 148).id
 
       assert res2 == res3
 
@@ -280,6 +292,13 @@ defmodule Ecto.PagingTest do
       # %{ending_before} return inversed result properly
       assert length(res2) == 4
       refute List.last(res1) in res2
+      {_, paging} = get_query()
+      |> Ecto.Query.order_by(desc: :inserted_at)
+      |> Ecto.Paging.TestRepo.page(%{limit: 5, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      refute cursors.ending_before
+      assert cursors.starting_after == Enum.at(res1, 3).id
     end
   end
 
@@ -353,6 +372,10 @@ defmodule Ecto.PagingTest do
         get_query_with_utc_timestamps()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
 
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 50).id
+      assert cursors.starting_after == Enum.at(res1, 99).id
+
       assert res2 == res3
 
       assert length(res2) == 50
@@ -385,6 +408,10 @@ defmodule Ecto.PagingTest do
       {res3, paging} =
         get_query_with_utc_timestamps()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 99).id
+      assert cursors.starting_after == Enum.at(res1, 148).id
 
       assert res2 == res3
 
@@ -422,6 +449,15 @@ defmodule Ecto.PagingTest do
       # %{ending_before} return inversed result properly
       assert length(res2) == 49
       refute List.last(res1) in res2
+
+      {_, paging} =
+        get_query_with_utc_timestamps()
+        |> Ecto.Query.order_by(desc: :inserted_at)
+        |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      refute cursors.ending_before
+      assert cursors.starting_after == Enum.at(res1, 48).id
     end
   end
 
@@ -494,6 +530,9 @@ defmodule Ecto.PagingTest do
         get_query_with_binary_id()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
 
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 50).id
+      assert cursors.starting_after == Enum.at(res1, 99).id
       assert res2 == res3
 
       assert length(res2) == 50
@@ -533,6 +572,10 @@ defmodule Ecto.PagingTest do
       {res3, paging} =
         get_query_with_binary_id()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 99).id
+      assert cursors.starting_after == Enum.at(res1, 148).id
 
       assert res2 == res3
 
@@ -662,6 +705,10 @@ defmodule Ecto.PagingTest do
         get_query_with_string_id()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{starting_after: Enum.at(res1, 49).id}})
 
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 50).id
+      assert cursors.starting_after == Enum.at(res1, 99).id
+
       assert res2 == res3
 
       assert length(res2) == 50
@@ -716,6 +763,10 @@ defmodule Ecto.PagingTest do
       {res3, paging} =
         get_query_with_string_id()
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
+
+      %Ecto.Paging{cursors: cursors} = paging
+      assert cursors.ending_before == Enum.at(res1, 99).id
+      assert cursors.starting_after == Enum.at(res1, 148).id
 
       assert res2 == res3
 
