@@ -184,6 +184,13 @@ defmodule Ecto.PagingTest do
       assert paging.has_more
     end
 
+    test "ending_before is not nil" do
+      {[head | _] = items, paging} = Ecto.Paging.TestRepo.page(Ecto.Paging.TestSchema, %{limit: 150})
+      assert 150 == Enum.count(items)
+      assert %{cursors: %{ending_before: ending_before}, has_more: true} = paging
+      assert head.id == ending_before
+    end
+
     test "paginates forward with starting after with ordering" do
       res1 =
         get_query()
@@ -297,7 +304,7 @@ defmodule Ecto.PagingTest do
       |> Ecto.Paging.TestRepo.page(%{limit: 5, cursors: %{ending_before: List.last(res1).id}})
 
       %Ecto.Paging{cursors: cursors} = paging
-      refute cursors.ending_before
+      assert cursors.ending_before == List.first(res1).id
       assert cursors.starting_after == Enum.at(res1, 3).id
     end
   end
@@ -456,7 +463,7 @@ defmodule Ecto.PagingTest do
         |> Ecto.Paging.TestRepo.page(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
 
       %Ecto.Paging{cursors: cursors} = paging
-      refute cursors.ending_before
+      assert cursors.ending_before == List.first(res1).id
       assert cursors.starting_after == Enum.at(res1, 48).id
     end
   end

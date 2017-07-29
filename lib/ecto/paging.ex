@@ -114,7 +114,7 @@ defmodule Ecto.Paging do
     %Ecto.Paging{
       limit: limit,
       has_more: has_more,
-      cursors: get_next_cursors(query_result, cursors, has_more)
+      cursors: get_next_cursors(query_result, cursors)
     }
   end
 
@@ -122,16 +122,11 @@ defmodule Ecto.Paging do
     get_next_paging(query_result, Ecto.Paging.from_map(paging))
   end
 
-  defp get_next_cursors([], _, _) do
-      %Ecto.Paging.Cursors{starting_after: nil, ending_before: nil}
+  defp get_next_cursors([], _) do
+    %Ecto.Paging.Cursors{starting_after: nil, ending_before: nil}
   end
 
-  defp get_next_cursors(query_result, _, false) do
-    %Ecto.Paging.Cursors{starting_after: List.last(query_result).id,
-                          ending_before: nil}
-  end
-
-  defp get_next_cursors(query_result, _, true) do
+  defp get_next_cursors(query_result, _) do
       %Ecto.Paging.Cursors{starting_after: List.last(query_result).id,
                            ending_before: List.first(query_result).id}
   end
