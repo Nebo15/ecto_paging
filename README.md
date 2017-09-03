@@ -34,12 +34,12 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 ## Installation
 
   1. Add `ecto_paging` to your list of dependencies in `mix.exs`:
-  
-     ```elixir
-     def deps do
-       [{:ecto_paging, "~> 0.8.1"}]
-     end
-     ```
+
+    ```elixir
+    def deps do
+      [{:ecto_paging, "~> 0.8.3"}]
+    end
+    ```
 
   2. Ensure `ecto_paging` is started before your application:
 
