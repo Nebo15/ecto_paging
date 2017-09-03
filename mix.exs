@@ -45,7 +45,7 @@ defmodule Ecto.Paging.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:ecto, "~> 2.1.6"},
+    [{:ecto, "~> 2.2"},
      {:postgrex, "~> 0.13.2", optional: true},
      {:benchfella, "~> 0.3", only: [:dev, :test]},
      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},
