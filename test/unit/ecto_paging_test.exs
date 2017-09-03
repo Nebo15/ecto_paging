@@ -26,7 +26,7 @@ defmodule Ecto.PagingTest do
     assert Ecto.Paging.TestRepo.all(query) == []
   end
 
-  test "explictly define asc order works" do
+  test "explicitly defined ASC order works" do
     records = insert_records()
     {:ok, record} = List.last(records)
     {{:ok, penultimate_record}, _list} = List.pop_at(records, length(records) - 2)
@@ -35,8 +35,8 @@ defmodule Ecto.PagingTest do
       |> Ecto.Query.order_by(asc: :inserted_at)
       |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: record.id}})
       |> Ecto.Paging.TestRepo.all
-    assert penultimate_record == Enum.at(res1, 49)
-      # Ordering not influencing pagination
+    assert penultimate_record.id == Enum.at(res1, 49).id
+    # Ordering not influencing pagination
     assert length(res1) == 50
   end
 
@@ -263,8 +263,8 @@ defmodule Ecto.PagingTest do
 
       {penultimate_record, _list} = List.pop_at(res1, length(res1) - 2)
       {start_record, _list} = List.pop_at(res1, length(res1) - 51)
-      assert penultimate_record in res2
-      assert start_record in res2
+      assert Enum.any?(res2, &(&1.id == penultimate_record.id))
+      assert Enum.any?(res2, &(&1.id == start_record.id))
       refute List.last(res1) in res2
 
       # Second query should be subset of first one
@@ -572,8 +572,8 @@ defmodule Ecto.PagingTest do
       {penultimate_record, _list} = List.pop_at(res1, length(res1) - 2)
       {start_record, _list} = List.pop_at(res1, length(res1) - 51)
 
-      assert penultimate_record in res2
-      assert start_record in res2
+      assert Enum.any?(res2, &(&1.id == penultimate_record.id))
+      assert Enum.any?(res2, &(&1.id == start_record.id))
       refute List.last(res1) in res2
 
       {res3, paging} =
@@ -619,7 +619,7 @@ defmodule Ecto.PagingTest do
       penultimate_record = Enum.at(res1, 148)
       start_record = List.first(res1)
 
-      assert penultimate_record in res2
+      assert Enum.any?(res2, &(&1.id == penultimate_record.id))
       refute start_record in res2
       refute List.last(res1) in res2
 
@@ -636,7 +636,7 @@ defmodule Ecto.PagingTest do
         |> Ecto.Paging.TestRepo.page(page)
       assert length(res3) == 50
 
-      assert penultimate_record in res3
+      assert Enum.any?(res3, &(&1.id == penultimate_record.id))
       refute List.last(res1) in res3
 
     end
@@ -782,8 +782,8 @@ defmodule Ecto.PagingTest do
       penultimate_record = Enum.at(res1, 148)
       start_record = Enum.at(res1, 99)
 
-      assert penultimate_record in res2
-      assert start_record == List.first(res2)
+      assert Enum.any?(res2, &(&1.id == penultimate_record.id))
+      assert Enum.any?(res2, &(&1.id == start_record.id))
 
       assert List.first(res2).id == paging.cursors.ending_before
       assert paging.has_more
@@ -796,7 +796,7 @@ defmodule Ecto.PagingTest do
         |> Ecto.Paging.TestRepo.all
 
       assert length(res1) == 150
-      penultimate_record = Enum.at(res1, 148)
+      penultimate_record_id = Enum.at(res1, 148).id
 
       res2 =
         get_query_with_string_id()
@@ -804,7 +804,7 @@ defmodule Ecto.PagingTest do
         |> Ecto.Paging.TestRepo.paginate(%{limit: 50, cursors: %{ending_before: List.last(res1).id}})
         |> Ecto.Paging.TestRepo.all
 
-      assert penultimate_record in res2
+      assert Enum.any?(res2, &(&1.id == penultimate_record_id))
     end
   end
 
