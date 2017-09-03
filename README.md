@@ -37,7 +37,7 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 
     ```elixir
     def deps do
-      [{:ecto_paging, "~> 0.8.3"}]
+      [{:ecto_paging, "~> 0.8.4"}]
     end
     ```
 
