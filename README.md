@@ -6,23 +6,23 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 
 ## Usage:
 
-  1. Add macro to your repo
+1. Add macro to your repo
 
-     ```elixir
-     defmodule MyRepo do
-        use Ecto.Repo, otp_app: :my_app
-        use Ecto.Paging.Repo # This string adds `paginate/2` and `page/3` methods.
-      end
-     ```
+```elixir
+defmodule MyRepo do
+  use Ecto.Repo, otp_app: :my_app
+  use Ecto.Paging.Repo # This string adds `paginate/2` and `page/3` methods.
+end
+```
 
-  2. Paginate!
+2. Paginate!
 
-     ```elixir
-     query = from p in Ecto.Paging.Schema
+```elixir
+query = from p in Ecto.Paging.Schema
 
-     {res, next_paging} = query
-     |> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 150})
-     ```
+{res, next_paging} = query
+|> Ecto.Paging.TestRepo.page(%Ecto.Paging{limit: 150})
+```
 
 ## Limitations:
 
@@ -33,18 +33,18 @@ This module provides a easy way to apply cursor-based pagination to your Ecto Qu
 
 ## Installation
 
-  1. Add `ecto_paging` to your list of dependencies in `mix.exs`:
+1. Add `ecto_paging` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:ecto_paging, "~> 0.8.4"}]
-    end
-    ```
+```elixir
+def deps do
+  [{:ecto_paging, "~> 0.8.4"}]
+end
+```
 
-  2. Ensure `ecto_paging` is started before your application:
+2. Ensure `ecto_paging` is started before your application:
 
-     ```elixir
-     def application do
-       [applications: [:ecto_paging]]
-     end
-     ```
+```elixir
+def application do
+  [applications: [:ecto_paging]]
+end
+```
